@@ -1,6 +1,3 @@
-import java.util.LinkedList;
-import java.util.List;
-
 public class BinaryTree {
 
     public static class Node {
@@ -23,10 +20,9 @@ public class BinaryTree {
         }
     }
 
-    Node main;
-    List<Integer> list = new LinkedList<>();
+    Node root;
 
-    Node addNode(Node node, int value){
+    private Node addNode(Node node, int value){
         if (node == null) return new Node(value);
         else if (node.value > value) node.left = addNode(node.left, value);
         else if (node.value < value) node.right = addNode(node.right, value);
@@ -34,28 +30,27 @@ public class BinaryTree {
     }
 
     public void add(int value) {
-        if (!list.contains(value)) list.add(value);
-        main = addNode(main, value);
+        root = addNode(root, value);
     }
 
-    Node findRightMaxNode(Node node) { // finding the maximum right from left member for remove()
+    private Node findRightMaxNode(Node node) { // finding the maximum right from left member for remove()
         if (node.right == null) return node;
         else return findRightMaxNode(node.right);
     }
 
     public void remove(int value) {
 
-        if (!list.contains(value)) throw new IllegalArgumentException("The tree does not contain this number");
+        if (search(root, value) == null) throw new IllegalArgumentException("The tree does not contain this number");
 
-        Node parent = list.get(0) != value ? findParent(value) : null;
+        Node parent = findParent(value);
         Node leftChild = findNode(value).left == null ? null : findNode(value).left;
         Node rightChild = findNode(value).right == null ? null : findNode(value).right;
 
-        if (list.get(0) == value && rightChild == null && leftChild != null) { // value is main and has 1 left descendant
-            main = findNode(value).left;
+        if (root.value == value && rightChild == null && leftChild != null) { // value is root and has 1 left descendant
+            root = findNode(value).left;
         }
-        else if (list.get(0) == value && leftChild == null && rightChild != null) { // value is main and has 1 right descendant
-            main = findNode(value).right;
+        else if (root.value == value && leftChild == null && rightChild != null) { // value is root and has 1 right descendant
+            root = findNode(value).right;
         }
         else if (leftChild == null && rightChild == null) { // value has no descendant
             if (parent.value > value) parent.left = null;
@@ -70,51 +65,38 @@ public class BinaryTree {
             else parent.right = rightChild;
         }
         else { // value has 2 descendant
-            Node rightMaxNodeParent = recursiveFindNode(main, findRightMaxNode(leftChild).value, "parent");
+            Node rightMaxNodeParent = searchParent(root, findRightMaxNode(leftChild).value);
             Node rightMaxNodeLeftChild = findRightMaxNode(leftChild).left;
 
-            if (list.get(0) == value) findNode(value).value = findRightMaxNode(leftChild).value;
+            if (root.value == value) findNode(value).value = findRightMaxNode(leftChild).value;
             else findNode(value).value = findRightMaxNode(findNode(value).left).value;
             rightMaxNodeParent.right = rightMaxNodeLeftChild;
         }
 
-        list.removeIf(i -> i == value);
-
     }
 
-    boolean condition(Node node, int value, String condition) {
-        if (condition.equals("descendant")) return  node.value == value;
-        else if (condition.equals("parent"))
-            return (node.left != null && node.left.value == value) || (node.right != null && node.right.value == value);
-        else throw new IllegalArgumentException("wrong condition");
+    private Node search(Node node, int value) {
+        if (node == null || node.value == value) return node;
+        else if (node.value < value) return search(node.right, value);
+        else return search(node.left, value);
     }
 
-    Node recursiveFindNode(Node node, int value, String condition) { // return parent node
-        if (condition(node, value, condition)) return node;
-        else if (node.value < value) return recursiveFindNode(node.right, value, condition);
-        else return recursiveFindNode(node.left, value, condition);
+    private Node searchParent(Node node, int value) {
+        if (root.value == value) return null;
+        else if ((node.left != null && node.left.value == value) || (node.right != null && node.right.value == value)) return node;
+        else if (node.value < value) return searchParent(node.right, value);
+        else return searchParent(node.left, value);
     }
 
-    public Node findNode(int value) { // return value node
-        if (!list.contains(value)) throw new IllegalArgumentException("The tree does not contain the passed number");
-        return recursiveFindNode(main, value, "descendant");
+    public Node findNode(int value) {
+        if (search(root, value) == null) throw new IllegalArgumentException("The tree does not contain the passed number");
+        return search(root, value);
     }
 
-    public Node findParent(int value) { // return parent node (with exception)
-        if (!list.contains(value) || list.get(0) == value) throw new IllegalArgumentException("The number has no parent");
-        return recursiveFindNode(main, value, "parent");
-    }
+    public Node findParent(int value) { return searchParent(root, value); }
 
-    public Node findLeftDescendant(int value) {
-        if (!list.contains(value)) throw new IllegalArgumentException("The tree does not contain the passed number");
-        else if (recursiveFindNode(main, value, "descendant").left == null) throw new IllegalArgumentException("This number has no left descendant");
-        else return recursiveFindNode(main, value, "descendant").left;
-    }
+    public Node findLeftDescendant(int value) { return search(root, value).left; }
 
-    public Node findRightDescendant(int value) {
-        if (!list.contains(value)) throw new IllegalArgumentException("The tree does not contain the passed number");
-        else if (recursiveFindNode(main, value, "descendant").right == null) throw new IllegalArgumentException("This number has no right descendant");
-        else return recursiveFindNode(main, value, "descendant").right;
-    }
+    public Node findRightDescendant(int value) { return search(root, value).right; }
 
 }

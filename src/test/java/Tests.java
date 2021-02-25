@@ -28,36 +28,25 @@ public class Tests {
         boolean exception = false;
 
         try {
-            tree.findLeftDescendant(4);
+            tree.findNode(36);
         } catch (IllegalArgumentException e) {
             exception = true;
         }
-
         assertTrue(exception);
+
         exception = false;
-
-        try {
-            tree.findParent(31);
-        } catch (IllegalArgumentException e) {
-            exception = true;
-        }
-
-        assertTrue(exception);
-        exception = false;
-
         try {
             tree.remove(22);
         } catch (IllegalArgumentException e) {
             exception = true;
         }
-
         assertTrue(exception);
     }
 
     @Test
     public void testRemove() {
         BinaryTree tree = init();
-        tree.remove(31); // remove main node
+        tree.remove(31); // remove root node
         assertEquals(7, tree.findNode(14).left.value);
         assertEquals(55, tree.findNode(14).right.value);
         tree.remove(55); // remove node with 2 descendants
