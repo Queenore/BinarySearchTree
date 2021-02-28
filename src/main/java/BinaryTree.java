@@ -22,15 +22,15 @@ public class BinaryTree {
 
     Node root;
 
-    private Node addNode(Node node, int value){
+    public void add(int value) {
+        root = addNode(root, value);
+    }
+
+    private Node addNode(Node node, int value) {
         if (node == null) return new Node(value);
         else if (node.value > value) node.left = addNode(node.left, value);
         else if (node.value < value) node.right = addNode(node.right, value);
         return node;
-    }
-
-    public void add(int value) {
-        root = addNode(root, value);
     }
 
     private Node findRightMaxNode(Node node) { // finding the maximum right from left member for remove()
