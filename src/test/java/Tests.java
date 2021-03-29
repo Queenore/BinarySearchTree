@@ -195,7 +195,11 @@ public class Tests {
             for (int j = 0; j < 12; j++) {
                 synchronized (monitor) {
                     count++;
-                    tree.findNode(list.get(j));
+                    try {
+                        tree.findNode(list.get(j));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             return null;
