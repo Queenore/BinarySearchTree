@@ -44,6 +44,8 @@ public class BinarySearchTree {
 
     public void remove(int value) {
 
+        if (search(root, value) == null) throw new IllegalArgumentException("The tree does not contain this number");
+
         Node parent = findParent(value);
         Node leftChild = findNode(value).left;
         Node rightChild = findNode(value).right;
@@ -67,6 +69,7 @@ public class BinarySearchTree {
 
             if (root.value == value) {
                 root.value = findRightMaxNode(leftChild).value;
+                assert rightMaxNodeParent != null;
                 rightMaxNodeParent.right = rightMaxNodeParentLeftChild;
             } else if (leftChild.hasNoDescendant()) {
                 leftChild.right = rightChild;
@@ -74,6 +77,7 @@ public class BinarySearchTree {
                 else parent.right = leftChild;
             } else {
                 findNode(value).value = findRightMaxNode(findNode(value).left).value;
+                assert rightMaxNodeParent != null;
                 rightMaxNodeParent.right = rightMaxNodeParentLeftChild;
             }
         }
@@ -95,6 +99,7 @@ public class BinarySearchTree {
     }
 
     public Node findNode(int value) {
+        if (search(root, value) == null) throw new IllegalArgumentException("The tree does not contain the passed number");
         return search(root, value);
     }
 

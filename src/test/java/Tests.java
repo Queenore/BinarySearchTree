@@ -181,7 +181,11 @@ public class Tests {
                 synchronized (monitor) {
                     count++;
                     tree.add(list.get(i));
-                    tree.remove(list.get(i - 1));
+                    try {
+                        tree.remove(list.get(i - 2));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             return null;
