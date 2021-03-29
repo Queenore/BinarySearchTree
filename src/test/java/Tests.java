@@ -48,7 +48,6 @@ public class Tests {
         newTree.add(7);
         newTree.add(23);
         newTree.remove(12);
-        System.out.println(newTree.root);
 
     }
 
@@ -117,8 +116,8 @@ public class Tests {
         Callable first = () -> {
             for (int i = 0; i < 20; i += 2) {
                 synchronized (monitor) {
-                    tree.add(list.get(i));
                     count++;
+                    tree.add(list.get(i));
                 }
             }
             return 0;
@@ -127,8 +126,8 @@ public class Tests {
         Callable second = () -> {
             for (int j = 1; j < 20; j += 2) {
                 synchronized (monitor) {
-                    tree.add(list.get(j));
                     count++;
+                    tree.add(list.get(j));
                 }
             }
             return 0;
@@ -147,9 +146,9 @@ public class Tests {
             e.printStackTrace();
         }
 
-        count = 0;
-
     }
+
+    public volatile static int counter = 0;
 
     @Test
     public void testConcurrentAddAndRemove() {
@@ -175,11 +174,11 @@ public class Tests {
             synchronized (monitor) {
                 tree.add(list.get(0));
                 tree.add(list.get(1));
-                count += 2;
+                counter += 2;
             }
             for (int i = 2; i < 12; i++) {
                 synchronized (monitor) {
-                    count++;
+                    counter++;
                     tree.add(list.get(i));
                     try {
                         tree.remove(list.get(i - 2));
@@ -194,7 +193,7 @@ public class Tests {
         Callable<BinarySearchTree> second = () -> {
             for (int j = 0; j < 12; j++) {
                 synchronized (monitor) {
-                    count++;
+                    counter++;
                     try {
                         tree.findNode(list.get(j));
                     } catch (Exception e) {
@@ -213,12 +212,10 @@ public class Tests {
             addNodeThread.get();
             removeNodeThread.get();
             executor.shutdown();
-            assertEquals(24, count);
+            assertEquals(24, counter);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
-
-        count = 0;
 
     }
 }
