@@ -1,6 +1,6 @@
 public class BinarySearchTree {
 
-    public static class Node {
+    public final static class Node {
         volatile public int value;
         volatile public Node left;
         volatile public Node right;
@@ -27,11 +27,8 @@ public class BinarySearchTree {
     volatile Node root;
     static final Object monitor = new Object();
 
-    public void add(int value) {
-        System.out.println("add1");
+    public synchronized void add(int value) {
         if (root == null) root = new Node(value);
-        System.out.println("add2");
-        System.out.println("add3");
         Node node = root;
         while (node != null && node.value != value) {
             if (node.value > value) {
@@ -47,30 +44,22 @@ public class BinarySearchTree {
                 } else
                     node = node.right;
             }
-            System.out.println("add4");
         }
     }
 
     private Node findRightMaxNode(Node node) { // finding the maximum right from left member for remove
-        synchronized (root) {
             if (node == null) return null;
             while (node.right != null)
                 node = node.right;
             return node;
-        }
     }
 
-    public boolean remove(int value) {
-
-            System.out.println("remove1");
-            if (findNode(value) == null) return false;
-            System.out.println("remove2");
-
-            System.out.println("remove3");
+    public synchronized boolean remove(int value) {
+        System.out.println("remove " + Thread.currentThread().getName());
+        if (findNode(value) == null) return false;
             Node parent = findParent(value);
             Node leftChild = findLeftDescendant(value);
             Node rightChild = findRightDescendant(value);
-
             if (root.value == value && root.hasNoDescendant()) root = null;
             else if (root.value == value && rightChild == null && leftChild != null) { // value is root and has 1 left descendant
                 root = leftChild;
@@ -103,8 +92,7 @@ public class BinarySearchTree {
                         rightMaxNodeParent.right = rightMaxNode.left;
                 }
             }
-            System.out.println("remove4");
-            return true;
+        return true;
     }
 
     public Node findParent(int value) {
@@ -136,12 +124,12 @@ public class BinarySearchTree {
     }
 
     public Node findLeftDescendant(int value) {
-        if (findNode(value).left != null) return findNode(value).left;
+        if (findNode(value) != null) return findNode(value).left;
         else return null;
     }
 
     public Node findRightDescendant(int value) {
-        if (findNode(value).right != null) return findNode(value).right;
+        if (findNode(value) != null) return findNode(value).right;
         else return null;
     }
 
