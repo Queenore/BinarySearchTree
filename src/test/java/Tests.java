@@ -2,8 +2,8 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Time;
+import java.util.*;
 import java.util.concurrent.*;
 
 
@@ -30,6 +30,7 @@ public class Tests {
 
     @Test
     public void testRemove() {
+
         BinarySearchTree tree = init();
         tree.remove(31); // remove root node
         assertEquals(7, tree.findNode(14).left.value);
@@ -48,6 +49,7 @@ public class Tests {
         newTree.add(7);
         newTree.add(23);
         newTree.remove(12);
+        assertEquals(35, newTree.findParent(7).value);
 
     }
 
@@ -55,6 +57,7 @@ public class Tests {
     public void testFindNode() {
         BinarySearchTree tree = init();
         assertEquals(34, tree.findNode(34).value);
+        assertEquals(31, tree.findNode(31).value);
         assertEquals(55, tree.findNode(55).value);
         assertEquals(14, tree.findNode(7).right.value);
     }
@@ -62,6 +65,8 @@ public class Tests {
     @Test
     public void testFindParent() {
         BinarySearchTree tree = init();
+        assertNull(tree.findParent(31));
+        assertNull(tree.findParent(132));
         assertEquals(14, tree.findParent(9).value);
         assertEquals(31, tree.findParent(7).value);
         assertEquals(51, tree.findParent(53).value);
@@ -89,45 +94,29 @@ public class Tests {
     public void testConcurrentAdding() {
 
         BinarySearchTree tree = new BinarySearchTree();
-        List<Integer> list = new ArrayList<>();
         Object monitor = new Object();
 
-        list.add(33);
-        list.add(23);
-        list.add(12);
-        list.add(39);
-        list.add(36);
-        list.add(17);
-        list.add(44);
-        list.add(2);
-        list.add(67);
-        list.add(35);
-        list.add(5);
-        list.add(34);
-        list.add(35);
-        list.add(37);
-        list.add(62);
-        list.add(79);
-        list.add(81);
-        list.add(80);
-        list.add(3);
-        list.add(16);
-
         Callable first = () -> {
-            for (int i = 0; i < 20; i += 2) {
-                synchronized (monitor) {
-                    count++;
-                    tree.add(list.get(i));
+            for (int i = 0; i < 2000; i++) {
+                int digit = 1 + (int) (Math.random() * 100);
+                tree.add(digit);
+                if (tree.findNode(digit) != null) {
+                    synchronized (monitor) {
+                        count++;
+                    }
                 }
             }
             return 0;
         };
 
         Callable second = () -> {
-            for (int j = 1; j < 20; j += 2) {
-                synchronized (monitor) {
-                    count++;
-                    tree.add(list.get(j));
+            for (int j = 0; j < 2000; j++) {
+                int digit1 = 1 + (int) (Math.random() * 100);
+                tree.add(digit1);
+                if (tree.findNode(digit1) != null) {
+                    synchronized (monitor) {
+                        count++;
+                    }
                 }
             }
             return 0;
@@ -141,65 +130,36 @@ public class Tests {
             addNodeFirstThread.get();
             addNodeSecondThread.get();
             executor.shutdown();
-            assertEquals(20, count); // проверка на количество добавленных узлов
+            assertEquals(4000, count); // проверка на количество добавленных узлов
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
 
     }
 
-    public volatile static int counter = 0;
-
     @Test
     public void testConcurrentAddAndRemove() {
 
         BinarySearchTree tree = new BinarySearchTree();
         List<Integer> list = new ArrayList<>();
-        Object monitor = new Object();
-
-        list.add(55);
-        list.add(12);
-        list.add(35);
-        list.add(74);
-        list.add(7);
-        list.add(68);
-        list.add(23);
-        list.add(72);
-        list.add(67);
-        list.add(39);
-        list.add(5);
-        list.add(34);
+        int counter = 0;
 
         Callable<BinarySearchTree> first = () -> {
-            synchronized (monitor) {
-                tree.add(list.get(0));
-                tree.add(list.get(1));
-                counter += 2;
-            }
-            for (int i = 2; i < 12; i++) {
-                synchronized (monitor) {
-                    counter++;
-                    tree.add(list.get(i));
-                    try {
-                        tree.remove(list.get(i - 2));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+            for (int i = 0; i < 2500; i++) {
+                System.out.println("first thread 1");
+                tree.add(1 + (int) (Math.random() * 100));
+                System.out.println("first thread 2");
             }
             return null;
         };
 
         Callable<BinarySearchTree> second = () -> {
-            for (int j = 0; j < 12; j++) {
-                synchronized (monitor) {
-                    counter++;
-                    try {
-                        tree.findNode(list.get(j));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+            for (int j = 0; j < 2500; j++) {
+                int digit = 1 + (int) (Math.random() * 100);
+                System.out.println("second thread 1");
+                tree.remove(digit);
+                System.out.println("second thread 2");
+                list.add(digit);
             }
             return null;
         };
@@ -211,8 +171,11 @@ public class Tests {
         try {
             addNodeThread.get();
             removeNodeThread.get();
-            executor.shutdown();
-            assertEquals(24, counter);
+            executor.shutdownNow();
+            for (int i = 0; i < list.size(); i++)
+                if (tree.findNode(list.get(i)) == null)
+                    counter++;
+            assertEquals(list.size(), counter);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
