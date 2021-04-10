@@ -9,7 +9,6 @@ public class BinarySearchTree {
             this.value = value;
             this.left = null;
             this.right = null;
-
         }
 
         public boolean hasNoDescendant() {
@@ -26,34 +25,35 @@ public class BinarySearchTree {
     }
 
     volatile Node root;
+    static final Object monitor = new Object();
 
-    public synchronized void add(int value) {
-        if (root == null) root = new Node(value);
-        Node node = root;
+    public void add(int value) {
         System.out.println("add1");
-        synchronized (root) {
-            while (node != null && node.value != value) {
-                if (node.value > value) {
-                    if (node.left == null) {
-                        node.left = new Node(value);
-                        break;
-                    } else
-                        node = node.left;
-                } else {
-                    if (node.right == null) {
-                        node.right = new Node(value);
-                        break;
-                    } else
-                        node = node.right;
-                }
-                System.out.println("add3");
+        if (root == null) root = new Node(value);
+        System.out.println("add2");
+        System.out.println("add3");
+        Node node = root;
+        while (node != null && node.value != value) {
+            if (node.value > value) {
+                if (node.left == null) {
+                    node.left = new Node(value);
+                    break;
+                } else
+                    node = node.left;
+            } else {
+                if (node.right == null) {
+                    node.right = new Node(value);
+                    break;
+                } else
+                    node = node.right;
             }
+            System.out.println("add4");
         }
     }
 
-    private Node findRightMaxNode(Node node) { // finding the maximum right from left member for remove()
-        if (node == null) return null;
-        synchronized ( node) {
+    private Node findRightMaxNode(Node node) { // finding the maximum right from left member for remove
+        synchronized (root) {
+            if (node == null) return null;
             while (node.right != null)
                 node = node.right;
             return node;
@@ -62,16 +62,14 @@ public class BinarySearchTree {
 
     public boolean remove(int value) {
 
-        System.out.println("removeWithException1" + search(value));
+            System.out.println("remove1");
+            if (findNode(value) == null) return false;
+            System.out.println("remove2");
 
-        if (search(value) == null) return false;
-
-        synchronized (root) {
+            System.out.println("remove3");
             Node parent = findParent(value);
-            Node leftChild = findNode(value).left;
-            Node rightChild = findNode(value).right;
-
-            System.out.println("removeWithException3");
+            Node leftChild = findLeftDescendant(value);
+            Node rightChild = findRightDescendant(value);
 
             if (root.value == value && root.hasNoDescendant()) root = null;
             else if (root.value == value && rightChild == null && leftChild != null) { // value is root and has 1 left descendant
@@ -92,7 +90,7 @@ public class BinarySearchTree {
                 Node rightMaxNodeParent = findParent(rightMaxNode.value);
 
                 if (root.value == value) {
-                    root.value = findRightMaxNode(leftChild).value;
+                    root.value = rightMaxNode.value;
                     if (rightMaxNodeParent != null)
                         rightMaxNodeParent.right = rightMaxNode.left;
                 } else if (leftChild.hasNoDescendant()) {
@@ -100,56 +98,51 @@ public class BinarySearchTree {
                     if (parent.value > value) parent.left = leftChild;
                     else parent.right = leftChild;
                 } else {
-                    findNode(value).value = findRightMaxNode(leftChild).value;
+                    findNode(value).value = rightMaxNode.value;
                     if (rightMaxNodeParent != null)
                         rightMaxNodeParent.right = rightMaxNode.left;
                 }
             }
-        }
-        return true;
-    }
-
-    private Node search(int value) {
-        Node node = root;
-        if (node == null) return null;
-        synchronized (node) {
-            while (node != null && node.value != value) {
-                if (node.value < value) node = node.right;
-                else node = node.left;
-            }
-            return node;
-        }
+            System.out.println("remove4");
+            return true;
     }
 
     public Node findParent(int value) {
+        if (root == null) return null;
         Node node = root;
-        synchronized (node) {
-            while (true) {
-                if ((node.left != null && node.left.value == value) || (node.right != null && node.right.value == value))
-                    break;
-                if (node.right != null && node.value < value)
-                    node = node.right;
-                else if (node.left != null)
-                    node = node.left;
-                else {
-                    node = null;
-                    break;
-                }
+        while (true) {
+            if ((node.left != null && node.left.value == value) || (node.right != null && node.right.value == value))
+                break;
+            if (node.right != null && node.value < value)
+                node = node.right;
+            else if (node.left != null)
+                node = node.left;
+            else {
+                node = null;
+                break;
             }
-            return node;
         }
+        return node;
     }
 
     public Node findNode(int value) {
-            return search(value);
+        if (root == null) return null;
+        Node node = root;
+        while (node != null && node.value != value) {
+            if (node.value < value) node = node.right;
+            else node = node.left;
+        }
+        return node;
     }
 
     public Node findLeftDescendant(int value) {
-        return search(value).left;
+        if (findNode(value).left != null) return findNode(value).left;
+        else return null;
     }
 
     public Node findRightDescendant(int value) {
-        return search(value).right;
+        if (findNode(value).right != null) return findNode(value).right;
+        else return null;
     }
 
 }

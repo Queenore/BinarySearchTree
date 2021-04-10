@@ -2,8 +2,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import java.sql.Time;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.*;
 
 
@@ -91,20 +92,19 @@ public class Tests {
     public volatile static int count = 0;
 
     @Test
-    public void testConcurrentAdding() {
+    public void testConcurrentAdd() {
 
         BinarySearchTree tree = new BinarySearchTree();
-        Object monitor = new Object();
+        final Object monitor = new Object();
 
         Callable first = () -> {
             for (int i = 0; i < 2000; i++) {
                 int digit = 1 + (int) (Math.random() * 100);
                 tree.add(digit);
-                if (tree.findNode(digit) != null) {
+                if (tree.findNode(digit) != null)
                     synchronized (monitor) {
                         count++;
                     }
-                }
             }
             return 0;
         };
@@ -113,11 +113,10 @@ public class Tests {
             for (int j = 0; j < 2000; j++) {
                 int digit1 = 1 + (int) (Math.random() * 100);
                 tree.add(digit1);
-                if (tree.findNode(digit1) != null) {
+                if (tree.findNode(digit1) != null)
                     synchronized (monitor) {
                         count++;
                     }
-                }
             }
             return 0;
         };
@@ -131,6 +130,7 @@ public class Tests {
             addNodeSecondThread.get();
             executor.shutdown();
             assertEquals(4000, count); // проверка на количество добавленных узлов
+            count = 0;
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -141,25 +141,32 @@ public class Tests {
     public void testConcurrentAddAndRemove() {
 
         BinarySearchTree tree = new BinarySearchTree();
-        List<Integer> list = new ArrayList<>();
-        int counter = 0;
+        Object monitor = new Object();
 
         Callable<BinarySearchTree> first = () -> {
             for (int i = 0; i < 2500; i++) {
-                System.out.println("first thread 1");
-                tree.add(1 + (int) (Math.random() * 100));
-                System.out.println("first thread 2");
+                int digit1 = 1 + (int) (Math.random() * 500);
+                System.out.println("first1");
+                tree.add(digit1);
+                System.out.println("first2");
+                synchronized (monitor) {
+                    if (tree.findNode(digit1) != null)
+                        count++;
+                }
             }
             return null;
         };
 
         Callable<BinarySearchTree> second = () -> {
             for (int j = 0; j < 2500; j++) {
-                int digit = 1 + (int) (Math.random() * 100);
-                System.out.println("second thread 1");
-                tree.remove(digit);
-                System.out.println("second thread 2");
-                list.add(digit);
+                int digit2 = 1 + (int) (Math.random() * 500);
+                System.out.println("second1");
+                tree.remove(digit2);
+                System.out.println("second2");
+                synchronized (monitor) {
+                    if (tree.findNode(digit2) == null)
+                        count++;
+                }
             }
             return null;
         };
@@ -172,13 +179,73 @@ public class Tests {
             addNodeThread.get();
             removeNodeThread.get();
             executor.shutdownNow();
-            for (int i = 0; i < list.size(); i++)
-                if (tree.findNode(list.get(i)) == null)
-                    counter++;
-            assertEquals(list.size(), counter);
+            assertEquals(5000, count);
+            count = 0;
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private BinarySearchTree initForTestConcurrentRemove() {
+        BinarySearchTree tree = new BinarySearchTree();
+        for (int i = 0; i < 4000; i++) {
+            tree.add(1 + (int) (Math.random() * 2500));
+            System.out.println(i);
+        }
+        return tree;
+    }
+
+    @Test
+    public void testConcurrentRemove() {
+
+        BinarySearchTree tree = initForTestConcurrentRemove();
+        Set<Integer> set = new HashSet<>();
+        Iterator iterator = set.iterator();
+        final Object monitor = new Object();
+
+        Callable<BinarySearchTree> first = () -> {
+            for (int i = 0; i < 2500; i++) {
+                int digit1 = 1 + (int) (Math.random() * 2500);
+                System.out.println("first1");
+                tree.remove(digit1);
+                System.out.println("first2");
+                set.add(digit1);
+
+            }
+            return null;
+        };
+
+        Callable<BinarySearchTree> second = () -> {
+            for (int j = 0; j < 2500; j++) {
+                int digit2 = 1 + (int) (Math.random() * 2500);
+                System.out.println("second1");
+                tree.remove(digit2);
+                System.out.println("second2");
+                set.add(digit2);
+
+            }
+            return null;
+        };
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<BinarySearchTree> addNodeThread = executor.submit(first);
+        Future<BinarySearchTree> removeNodeThread = executor.submit(second);
+
+        try {
+            addNodeThread.get();
+            removeNodeThread.get();
+            executor.shutdownNow();
+            while (iterator.hasNext()) {
+                int ss = (int) iterator.next();
+                System.out.println(ss);
+                if (tree.findNode(ss) == null)
+                    count++;
+            }
+            assertEquals(set.size(), count);
+            count = 0;
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 }
