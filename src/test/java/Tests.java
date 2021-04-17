@@ -31,25 +31,41 @@ public class Tests {
     @Test
     public void testRemove() {
 
-        BinarySearchTree tree = init();
-        tree.remove(31); // remove root node
-        assertEquals(7, tree.findNode(14).left.value);
-        assertEquals(55, tree.findNode(14).right.value);
-        tree.remove(55); // remove node with 2 descendants
-        assertEquals(34, tree.findNode(53).left.value);
-        assertEquals(60, tree.findNode(53).right.value);
-        tree.remove(33); // remove node without descendants
-        assertNull(tree.findNode(34).left);
-        tree.remove(51); // remove node with 1 descendant
-        assertEquals(44, tree.findNode(34).right.value);
+        BinarySearchTree firstTree = init();
+        firstTree.remove(31); // remove root node
+        assertEquals(7, firstTree.findNode(14).left.value);
+        assertEquals(55, firstTree.findNode(14).right.value);
+        firstTree.remove(55); // remove node with 2 descendants
+        assertEquals(34, firstTree.findNode(53).left.value);
+        assertEquals(60, firstTree.findNode(53).right.value);
+        firstTree.remove(33); // remove node without descendants
+        assertNull(firstTree.findNode(34).left);
+        firstTree.remove(51); // remove node with 1 descendant
+        assertEquals(44, firstTree.findNode(34).right.value);
 
-        BinarySearchTree newTree = new BinarySearchTree();
-        newTree.add(35);
-        newTree.add(12);
-        newTree.add(7);
-        newTree.add(23);
-        newTree.remove(12);
-        assertEquals(35, newTree.findParent(7).value);
+        BinarySearchTree secondTree = new BinarySearchTree();
+        secondTree.add(35);
+        secondTree.add(12);
+        secondTree.add(7);
+        secondTree.add(23);
+        secondTree.remove(12);
+        assertEquals(35, secondTree.findParent(7).value);
+
+        BinarySearchTree thirdTree = new BinarySearchTree();
+        thirdTree.add(12);
+        thirdTree.add(27);
+        thirdTree.add(44);
+        thirdTree.add(24);
+        thirdTree.add(22);
+        thirdTree.remove(27);
+        assertEquals(22, thirdTree.findLeftDescendant(24).value);
+
+        BinarySearchTree fourthTree = new BinarySearchTree();
+        fourthTree.add(13);
+        fourthTree.add(8);
+        fourthTree.add(44);
+        fourthTree.remove(13);
+        assertEquals(8, fourthTree.root.value);
 
     }
 
@@ -88,7 +104,8 @@ public class Tests {
         assertEquals(49, tree.findRightDescendant(44).value);
     }
 
-    public volatile static int count = 0;
+    public volatile int count = 0;
+    public final Object monitor = new Object();
 
     @Test
     public void testConcurrentAdd() {
@@ -137,64 +154,20 @@ public class Tests {
     }
 
     @Test
-    public void testConcurrentRemove() {
+    public void testConcurrentRemove(){
 
         BinarySearchTree tree = new BinarySearchTree();
         Set<Integer> set = new HashSet<>();
-
-        Thread first = new Thread(() -> {
-            for (int i = 0; i < 2500; i++) {
-                int digit1 = 1 + (int) (Math.random() * 2500);
-                System.out.println("Первый поток зашел");
-                tree.remove(digit1);
-                System.out.println("Первый поток вышел");
-                set.add(digit1);
-            }
-        });
-
-        Thread second = new Thread(() -> {
-            for (int j = 0; j < 2500; j++) {
-                int digit2 = 1 + (int) (Math.random() * 2500);
-                System.out.println("Второй поток зашел");
-                tree.remove(digit2);
-                System.out.println("Второй поток зашел");
-                set.add(digit2);
-            }
-        });
-
-
-        for (int i = 0; i < 4000; i++) {
+        for (int i = 0; i < 4000; i++)
             tree.add(1 + (int) (Math.random() * 2500));
-            if (i == 3999) System.out.println(i);
-        }
-        first.start();
-        second.start();
 
-        while (first.isAlive() || second.isAlive()) {
-            System.out.println("wait");
-        }
-        for (Integer integer : set)
-            if (tree.findNode(integer) == null)
-                count++;
-        assertEquals(set.size(), count);
-        count = 0;
-    }
-
-    @Test
-    public void testConcurrentAddAndRemove() {
-
-        BinarySearchTree tree = new BinarySearchTree();
-        Object monitor = new Object();
 
         Callable<BinarySearchTree> first = () -> {
             for (int i = 0; i < 2500; i++) {
-                int digit1 = 1 + (int) (Math.random() * 500);
-                System.out.println("first1");
-                tree.add(digit1);
-                System.out.println("first2");
+                int digit1 = 1 + (int) (Math.random() * 2500);
+                tree.remove(digit1);
                 synchronized (monitor) {
-                    if (tree.findNode(digit1) != null)
-                        count++;
+                    set.add(digit1);
                 }
             }
             return null;
@@ -202,13 +175,10 @@ public class Tests {
 
         Callable<BinarySearchTree> second = () -> {
             for (int j = 0; j < 2500; j++) {
-                int digit2 = 1 + (int) (Math.random() * 500);
-                System.out.println("second1");
+                int digit2 = 1 + (int) (Math.random() * 2500);
                 tree.remove(digit2);
-                System.out.println("second2");
                 synchronized (monitor) {
-                    if (tree.findNode(digit2) == null)
-                        count++;
+                    set.add(digit2);
                 }
             }
             return null;
@@ -222,11 +192,62 @@ public class Tests {
             addNodeThread.get();
             removeNodeThread.get();
             executor.shutdownNow();
-            assertEquals(5000, count);
+            for (Integer integer : set)
+                if (tree.findNode(integer) == null)
+                    count++;
+            assertEquals(set.size(), count); // проверка на удаленные узлы
+            count = 0;
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testConcurrentAddAndRemove() {
+
+        BinarySearchTree tree = new BinarySearchTree();
+        Object monitor = new Object();
+        Set<Integer> set = new HashSet<>();
+
+        Callable<BinarySearchTree> first = () -> {
+            for (int i = 0; i < 2500; i++) {
+                int digit1 = 1 + (int) (Math.random() * 500);
+                tree.add(digit1);
+                synchronized (monitor) {
+                    set.add(digit1);
+                }
+            }
+            return null;
+        };
+
+        Callable<BinarySearchTree> second = () -> {
+            for (int j = 0; j < 2500; j++) {
+                int digit2 = 1 + (int) (Math.random() * 500);
+                tree.remove(digit2);
+                synchronized (monitor) {
+                    set.remove(digit2);
+                }
+            }
+            return null;
+        };
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<BinarySearchTree> addNodeThread = executor.submit(first);
+        Future<BinarySearchTree> removeNodeThread = executor.submit(second);
+
+        try {
+            addNodeThread.get();
+            removeNodeThread.get();
+            executor.shutdownNow();
+            for (Integer integer : set)
+                if (tree.findNode(integer) != null)
+                    count++;
+            assertEquals(set.size(), count);
             count = 0;
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
 
     }
+
 }
