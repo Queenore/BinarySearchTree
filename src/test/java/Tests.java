@@ -104,7 +104,7 @@ public class Tests {
         assertEquals(49, tree.findRightDescendant(44).value);
     }
 
-    public volatile int count = 0;
+    public int count = 0;
     public final Object monitor = new Object();
 
     @Test
@@ -113,7 +113,7 @@ public class Tests {
         BinarySearchTree tree = new BinarySearchTree();
         final Object monitor = new Object();
 
-        Callable first = () -> {
+        Callable<BinarySearchTree> first = () -> {
             for (int i = 0; i < 2000; i++) {
                 int digit1 = 1 + (int) (Math.random() * 100);
                 tree.add(digit1);
@@ -122,10 +122,10 @@ public class Tests {
                         count++;
                     }
             }
-            return 0;
+            return null;
         };
 
-        Callable second = () -> {
+        Callable<BinarySearchTree> second = () -> {
             for (int j = 0; j < 2000; j++) {
                 int digit2 = 1 + (int) (Math.random() * 100);
                 tree.add(digit2);
@@ -134,7 +134,7 @@ public class Tests {
                         count++;
                     }
             }
-            return 0;
+            return null;
         };
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
