@@ -2,9 +2,9 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.*;
+//import java.util.HashSet;
+//import java.util.Set;
+//import java.util.concurrent.*;
 
 
 public class Tests {
@@ -104,150 +104,149 @@ public class Tests {
         assertEquals(49, tree.findRightDescendant(44).value);
     }
 
-    public int count = 0;
-    public final Object monitor = new Object();
-
-    @Test
-    public void testConcurrentAdd() {
-
-        BinarySearchTree tree = new BinarySearchTree();
-        final Object monitor = new Object();
-
-        Callable<BinarySearchTree> first = () -> {
-            for (int i = 0; i < 2000; i++) {
-                int digit1 = 1 + (int) (Math.random() * 100);
-                tree.add(digit1);
-                if (tree.findNode(digit1) != null)
-                    synchronized (monitor) {
-                        count++;
-                    }
-            }
-            return null;
-        };
-
-        Callable<BinarySearchTree> second = () -> {
-            for (int j = 0; j < 2000; j++) {
-                int digit2 = 1 + (int) (Math.random() * 100);
-                tree.add(digit2);
-                if (tree.findNode(digit2) != null)
-                    synchronized (monitor) {
-                        count++;
-                    }
-            }
-            return null;
-        };
-
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        Future<BinarySearchTree> addNodeFirstThread = executor.submit(first);
-        Future<BinarySearchTree> addNodeSecondThread = executor.submit(second);
-
-        try {
-            addNodeFirstThread.get();
-            addNodeSecondThread.get();
-            executor.shutdown();
-            assertEquals(4000, count); // проверка на количество добавленных узлов
-            count = 0;
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    @Test
-    public void testConcurrentRemove(){
-
-        BinarySearchTree tree = new BinarySearchTree();
-        Set<Integer> set = new HashSet<>();
-        for (int i = 0; i < 4000; i++)
-            tree.add(1 + (int) (Math.random() * 2500));
-
-
-        Callable<BinarySearchTree> first = () -> {
-            for (int i = 0; i < 2500; i++) {
-                int digit1 = 1 + (int) (Math.random() * 2500);
-                tree.remove(digit1);
-                synchronized (monitor) {
-                    set.add(digit1);
-                }
-            }
-            return null;
-        };
-
-        Callable<BinarySearchTree> second = () -> {
-            for (int j = 0; j < 2500; j++) {
-                int digit2 = 1 + (int) (Math.random() * 2500);
-                tree.remove(digit2);
-                synchronized (monitor) {
-                    set.add(digit2);
-                }
-            }
-            return null;
-        };
-
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        Future<BinarySearchTree> addNodeThread = executor.submit(first);
-        Future<BinarySearchTree> removeNodeThread = executor.submit(second);
-
-        try {
-            addNodeThread.get();
-            removeNodeThread.get();
-            executor.shutdownNow();
-            for (Integer integer : set)
-                if (tree.findNode(integer) == null)
-                    count++;
-            assertEquals(set.size(), count); // проверка на удаленные узлы
-            count = 0;
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Test
-    public void testConcurrentAddAndRemove() {
-
-        BinarySearchTree tree = new BinarySearchTree();
-        Object monitor = new Object();
-        Set<Integer> set = new HashSet<>();
-
-        Callable<BinarySearchTree> first = () -> {
-            for (int i = 0; i < 2500; i++) {
-                int digit1 = 1 + (int) (Math.random() * 500);
-                tree.add(digit1);
-                synchronized (monitor) {
-                    set.add(digit1);
-                }
-            }
-            return null;
-        };
-
-        Callable<BinarySearchTree> second = () -> {
-            for (int j = 0; j < 2500; j++) {
-                int digit2 = 1 + (int) (Math.random() * 500);
-                tree.remove(digit2);
-                synchronized (monitor) {
-                    set.remove(digit2);
-                }
-            }
-            return null;
-        };
-
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        Future<BinarySearchTree> addNodeThread = executor.submit(first);
-        Future<BinarySearchTree> removeNodeThread = executor.submit(second);
-
-        try {
-            addNodeThread.get();
-            removeNodeThread.get();
-            executor.shutdownNow();
-            for (Integer integer : set)
-                if (tree.findNode(integer) != null)
-                    count++;
-            assertEquals(set.size(), count);
-            count = 0;
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-
-    }
+//    public int count = 0;
+//    public final Object monitor = new Object();
+//
+//    @Test
+//    public void testConcurrentAdd() {
+//
+//        BinarySearchTree tree = new BinarySearchTree();
+//        final Object monitor = new Object();
+//
+//        Callable<BinarySearchTree> first = () -> {
+//            for (int i = 0; i < 2000; i++) {
+//                int digit1 = 1 + (int) (Math.random() * 100);
+//                tree.add(digit1);
+//                if (tree.findNode(digit1) != null)
+//                    synchronized (monitor) {
+//                        count++;
+//                    }
+//            }
+//            return null;
+//        };
+//
+//        Callable<BinarySearchTree> second = () -> {
+//            for (int j = 0; j < 2000; j++) {
+//                int digit2 = 1 + (int) (Math.random() * 100);
+//                tree.add(digit2);
+//                if (tree.findNode(digit2) != null)
+//                    synchronized (monitor) {
+//                        count++;
+//                    }
+//            }
+//            return null;
+//        };
+//
+//        ExecutorService executor = Executors.newFixedThreadPool(2);
+//        Future<BinarySearchTree> addNodeFirstThread = executor.submit(first);
+//        Future<BinarySearchTree> addNodeSecondThread = executor.submit(second);
+//
+//        try {
+//            addNodeFirstThread.get();
+//            addNodeSecondThread.get();
+//            executor.shutdown();
+//            assertEquals(4000, count); // проверка на количество добавленных узлов
+//            count = 0;
+//        } catch (ExecutionException | InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
+//
+//    @Test
+//    public void testConcurrentRemove(){
+//
+//        BinarySearchTree tree = new BinarySearchTree();
+//        Set<Integer> set = new HashSet<>();
+//        for (int i = 0; i < 4000; i++)
+//            tree.add(1 + (int) (Math.random() * 2500));
+//
+//        Callable<BinarySearchTree> first = () -> {
+//            for (int i = 0; i < 2500; i++) {
+//                int digit1 = 1 + (int) (Math.random() * 2500);
+//                tree.remove(digit1);
+//                synchronized (monitor) {
+//                    set.add(digit1);
+//                }
+//            }
+//            return null;
+//        };
+//
+//        Callable<BinarySearchTree> second = () -> {
+//            for (int j = 0; j < 2500; j++) {
+//                int digit2 = 1 + (int) (Math.random() * 2500);
+//                tree.remove(digit2);
+//                synchronized (monitor) {
+//                    set.add(digit2);
+//                }
+//            }
+//            return null;
+//        };
+//
+//        ExecutorService executor = Executors.newFixedThreadPool(2);
+//        Future<BinarySearchTree> addNodeThread = executor.submit(first);
+//        Future<BinarySearchTree> removeNodeThread = executor.submit(second);
+//
+//        try {
+//            addNodeThread.get();
+//            removeNodeThread.get();
+//            executor.shutdownNow();
+//            for (Integer integer : set)
+//                if (tree.findNode(integer) == null)
+//                    count++;
+//            assertEquals(set.size(), count); // проверка на удаленные узлы
+//            count = 0;
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    @Test
+//    public void testConcurrentAddAndRemove() {
+//
+//        BinarySearchTree tree = new BinarySearchTree();
+//        Object monitor = new Object();
+//        Set<Integer> set = new HashSet<>();
+//
+//        Callable<BinarySearchTree> first = () -> {
+//            for (int i = 0; i < 2500; i++) {
+//                int digit1 = 1 + (int) (Math.random() * 500);
+//                tree.add(digit1);
+//                synchronized (monitor) {
+//                    set.add(digit1);
+//                }
+//            }
+//            return null;
+//        };
+//
+//        Callable<BinarySearchTree> second = () -> {
+//            for (int j = 0; j < 2500; j++) {
+//                int digit2 = 1 + (int) (Math.random() * 500);
+//                tree.remove(digit2);
+//                synchronized (monitor) {
+//                    set.remove(digit2);
+//                }
+//            }
+//            return null;
+//        };
+//
+//        ExecutorService executor = Executors.newFixedThreadPool(2);
+//        Future<BinarySearchTree> addNodeThread = executor.submit(first);
+//        Future<BinarySearchTree> removeNodeThread = executor.submit(second);
+//
+//        try {
+//            addNodeThread.get();
+//            removeNodeThread.get();
+//            executor.shutdownNow();
+//            for (Integer integer : set)
+//                if (tree.findNode(integer) != null)
+//                    count++;
+//            assertEquals(set.size(), count);
+//            count = 0;
+//        } catch (InterruptedException | ExecutionException e) {
+//            e.printStackTrace();
+//        }
+//
+//    }
 
 }

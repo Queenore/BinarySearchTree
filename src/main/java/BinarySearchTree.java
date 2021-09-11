@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class BinarySearchTree {
 
     public static final class Node {
@@ -22,11 +24,26 @@ public class BinarySearchTree {
             result += this.right == null ? "; right descendant: " + null + "]" : "; right descendant: " + this.right.value + "]";
             return result;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Node node = (Node) o;
+            return value == node.value &&
+                    Objects.equals(left, node.left) &&
+                    Objects.equals(right, node.right);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value, left, right);
+        }
     }
 
-    volatile Node root;
+    Node root;
 
-    public synchronized void add(int value) {
+    public void add(int value) {
         if (root == null) root = new Node(value);
         Node node = root;
         while (node != null && node.value != value) {
@@ -53,7 +70,7 @@ public class BinarySearchTree {
         return node;
     }
 
-    public synchronized boolean remove(int value) {
+    public boolean remove(int value) {
         if (findNode(value) == null) return false;
 
         Node parent = findParent(value);
@@ -98,7 +115,6 @@ public class BinarySearchTree {
             }
         }
         return true;
-
     }
 
     public Node findParent(int value) {
@@ -120,7 +136,7 @@ public class BinarySearchTree {
     }
 
 
-    public synchronized Node findNode(int value) {
+    public Node findNode(int value) {
         if (root == null) return null;
         Node node = root;
         while (node != null && node.value != value)
